@@ -98,8 +98,31 @@ X:AddButton("Instant Prompt",function()
     game.DescendantAdded:Connect(I)
 end)
 
-X:AddButton("Infinite Yield", function()
-    loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+X:AddButton("Infinite Yield",function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source',true))()
+end)
+
+X:AddButton("Clear UIs",function()
+    local player=game:GetService("Players").LocalPlayer
+    local playerGui=player.PlayerGui
+    local mainGui=playerGui:FindFirstChild("Main")
+    if mainGui then
+        local essentials=mainGui:FindFirstChild("Essentials")
+        if essentials then
+            local conditions=essentials:FindFirstChild("Conditions")
+            if conditions then conditions.Visible=false end
+            local laws=essentials:FindFirstChild("Laws")
+            if laws then laws.Visible=false end
+        end
+        local roles=mainGui:FindFirstChild("Roles")
+        if roles then roles.Visible=false end
+        local events=mainGui:FindFirstChild("Events")
+        if events then events.Visible=false end
+        local shopMain=mainGui:FindFirstChild("Shop") and mainGui.Shop:FindFirstChild("Main")
+        if shopMain then shopMain.Visible=false end
+        local report=mainGui:FindFirstChild("Report")
+        if report then report.Visible=false end
+    end
 end)
 
 X:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false,Tooltip='Toggle highlight on Rosaline'}):OnChanged(function(value)
