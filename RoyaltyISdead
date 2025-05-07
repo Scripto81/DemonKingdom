@@ -8,7 +8,7 @@ local Library = loadstring(game:HttpGet(repo.."Library.lua"))()
 local Theme  = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
 local Save   = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
 
-local W      = Library:CreateWindow({Title="Rise to Royalty",Center=true,AutoShow=true})
+local W      = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
 _G.LinoriaGui = Library.ScreenGui
 
 Theme:SetLibrary(Library)
