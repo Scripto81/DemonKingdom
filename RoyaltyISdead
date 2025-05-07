@@ -5,25 +5,24 @@ end
 
 local repo    = "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/"
 local Library = loadstring(game:HttpGet(repo.."Library.lua"))()
-local Theme  = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
-local Save   = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
+local Theme   = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
+local Save    = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
 
-local W      = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
+local W       = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
 _G.LinoriaGui = Library.ScreenGui
 
-Theme:SetLibrary(Library)
-Theme:ApplyToTab(W:AddTab("UI Settings"))
+local T       = W:AddTab("Main")
+local F       = T:AddLeftGroupbox("Food")
+local D       = T:AddLeftGroupbox("Drinks")
+local S       = T:AddLeftGroupbox("Desserts")
 
-local T      = W:AddTab("Main")
-local F      = T:AddLeftGroupbox("Food")
-local D      = T:AddLeftGroupbox("Drinks")
-local S      = T:AddLeftGroupbox("Desserts")
-local R      = W:AddTab("Resources")               -- new Resources tab
-local ResGB  = R:AddLeftGroupbox("Resources")      -- Powder & Mint
-local MedGB  = R:AddLeftGroupbox("Medicine")       -- Saffron, Honey, Tea
-local X      = T:AddLeftGroupbox("Tools")
+local Rtab    = W:AddTab("Resources")
+local ResGB   = Rtab:AddLeftGroupbox("Resources")
+local MedGB   = Rtab:AddLeftGroupbox("Medicine")
 
--- Food
+local ToolTab = W:AddTab("Tools")
+local X       = ToolTab:AddLeftGroupbox("Tools")
+
 F:AddButton("Cinnamon Bread",function()
     local args={workspace.World.Interactables.Stores.BreadStall,"Cinnamon Bread"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -37,7 +36,6 @@ F:AddButton("Bread",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
--- Drinks
 D:AddButton("Grape Juice",function()
     local args={workspace.World.Interactables.Stores.DrinkStall,"Grape Juice"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -51,7 +49,6 @@ D:AddButton("Apple Juice",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
--- Desserts
 S:AddButton("Tart",function()
     local args={workspace.World.Interactables.Stores.DessertStall,"Tart"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -73,7 +70,6 @@ S:AddButton("Chocolate Cake",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
--- Resources
 ResGB:AddButton("Powder",function()
     local args={workspace.World.Interactables.Stores.ResourceStall,"Powder"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -83,7 +79,6 @@ ResGB:AddButton("Mint",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
--- Medicine
 MedGB:AddButton("Saffron",function()
     local args={workspace.World.Interactables.Stores.MedicineStall,"Saffron"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -97,12 +92,38 @@ MedGB:AddButton("Tea",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
--- Tools
 X:AddButton("Instant Prompt",function()
     local function I(p) if p:IsA("ProximityPrompt") then p.HoldDuration=0 end end
     for _,v in pairs(game:GetDescendants()) do I(v) end
     game.DescendantAdded:Connect(I)
 end)
+
+X:AddButton("Infinite Yield", function()
+    loadstring(game:HttpGet(('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'),true))()
+end)
+
+X:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false,Tooltip='Toggle highlight on Rosaline'}):OnChanged(function(value)
+    local npc=workspace:WaitForChild("World"):WaitForChild("Interactables"):WaitForChild("SpecialNPCs"):WaitForChild("Rosaline")
+    local existing=npc:FindFirstChild("RosalineHighlight")
+    if value then
+        if not existing then
+            local h=Instance.new("Highlight")
+            h.Name="RosalineHighlight"
+            h.Adornee=npc
+            h.FillColor=Color3.fromRGB(255,0,0)
+            h.OutlineColor=Color3.fromRGB(255,255,255)
+            h.FillTransparency=0.5
+            h.OutlineTransparency=0
+            h.Parent=npc
+        end
+    else
+        if existing then existing:Destroy() end
+    end
+end)
+
+-- UI Settings Tab (moved to end)
+Theme:SetLibrary(Library)
+Theme:ApplyToTab(W:AddTab("UI Settings"))
 
 Save:SetLibrary(Library)
 Save:ApplyToWindow(W)
