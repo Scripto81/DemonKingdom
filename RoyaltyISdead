@@ -3,25 +3,26 @@ if _G.LinoriaGui then
     _G.LinoriaGui = nil
 end
 
-local repo    = "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/"
+local repo = "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/"
 local Library = loadstring(game:HttpGet(repo.."Library.lua"))()
-local Theme   = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
-local Save    = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
+local Theme = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
+local Save = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
 
-local W       = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
+local W = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
 _G.LinoriaGui = Library.ScreenGui
 
-local T       = W:AddTab("Main")
-local F       = T:AddLeftGroupbox("Food")
-local D       = T:AddLeftGroupbox("Drinks")
-local S       = T:AddLeftGroupbox("Desserts")
+local T = W:AddTab("Main")
+local F = T:AddLeftGroupbox("Food")
+local D = T:AddLeftGroupbox("Drinks")
+local S = T:AddLeftGroupbox("Desserts")
 
-local Rtab    = W:AddTab("Resources")
-local ResGB   = Rtab:AddLeftGroupbox("Resources")
-local MedGB   = Rtab:AddLeftGroupbox("Medicine")
+local Rtab = W:AddTab("Resources")
+local ResGB = Rtab:AddLeftGroupbox("Resources")
+local MedGB = Rtab:AddLeftGroupbox("Medicine")
 
 local ToolTab = W:AddTab("Tools")
-local X       = ToolTab:AddLeftGroupbox("Tools")
+local X = ToolTab:AddLeftGroupbox("Tools")
+local ExtraGB = ToolTab:AddLeftGroupbox("Extra")
 
 F:AddButton("Cinnamon Bread",function()
     local args={workspace.World.Interactables.Stores.BreadStall,"Cinnamon Bread"}
@@ -125,23 +126,39 @@ X:AddButton("Clear UIs",function()
     end
 end)
 
-X:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false,Tooltip='Toggle highlight on Rosaline'}):OnChanged(function(value)
+ExtraGB:AddButton("Animations",function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/Emerson2-creator/Scripts-Roblox/refs/heads/main/ScriptR6/AnimGuiV2.lua'))()
+end)
+
+-- Instant Deliver Gifts Handler
+local RosalinaTab=W:AddTab("Rosalina")
+local RosiGB=RosalinaTab:AddLeftGroupbox("Rosalina UI")
+RosiGB:AddButton("Rosalina UI",function()
+    local player=game:GetService("Players").LocalPlayer
+    local gui=player.PlayerGui:WaitForChild("Main"):WaitForChild("Interactions"):WaitForChild("Rosaline")
+    if gui then gui.Visible=true end
+end)
+
+RosiGB:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false,Tooltip='Toggle highlight on Rosaline'}):OnChanged(function(value)
     local npc=workspace:WaitForChild("World"):WaitForChild("Interactables"):WaitForChild("SpecialNPCs"):WaitForChild("Rosaline")
     local existing=npc:FindFirstChild("RosalineHighlight")
     if value then
         if not existing then
             local h=Instance.new("Highlight")
-            h.Name="RosalineHighlight"
-            h.Adornee=npc
-            h.FillColor=Color3.fromRGB(255,0,0)
-            h.OutlineColor=Color3.fromRGB(255,255,255)
-            h.FillTransparency=0.5
-            h.OutlineTransparency=0
+            h.Name="RosalineHighlight";h.Adornee=npc;h.FillColor=Color3.fromRGB(255,0,0)
+            h.OutlineColor=Color3.fromRGB(255,255,255);h.FillTransparency=0.5;h.OutlineTransparency=0
             h.Parent=npc
         end
     else
         if existing then existing:Destroy() end
     end
+end)
+
+RosiGB:AddButton("Instant Deliver Gifts!",function()
+    local args={"ReputationGift"}
+    game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit")
+        :WaitForChild("Services"):WaitForChild("NPCService"):WaitForChild("RE"):WaitForChild("Event")
+        :FireServer(unpack(args))
 end)
 
 -- UI Settings Tab (moved to end)
