@@ -11,19 +11,23 @@ local Save = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
 local W = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
 _G.LinoriaGui = Library.ScreenGui
 
+-- Main Tab
 local T = W:AddTab("Main")
 local F = T:AddLeftGroupbox("Food")
 local D = T:AddLeftGroupbox("Drinks")
 local S = T:AddLeftGroupbox("Desserts")
 
+-- Resources Tab
 local Rtab = W:AddTab("Resources")
 local ResGB = Rtab:AddLeftGroupbox("Resources")
 local MedGB = Rtab:AddLeftGroupbox("Medicine")
 
+-- Tools Tab
 local ToolTab = W:AddTab("Tools")
 local X = ToolTab:AddLeftGroupbox("Tools")
 local ExtraGB = ToolTab:AddLeftGroupbox("Extra")
 
+-- Food Buttons
 F:AddButton("Cinnamon Bread",function()
     local args={workspace.World.Interactables.Stores.BreadStall,"Cinnamon Bread"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -37,6 +41,7 @@ F:AddButton("Bread",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
+-- Drink Buttons
 D:AddButton("Grape Juice",function()
     local args={workspace.World.Interactables.Stores.DrinkStall,"Grape Juice"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -50,6 +55,7 @@ D:AddButton("Apple Juice",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
+-- Dessert Buttons
 S:AddButton("Tart",function()
     local args={workspace.World.Interactables.Stores.DessertStall,"Tart"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -71,6 +77,7 @@ S:AddButton("Chocolate Cake",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
+-- Resources Buttons
 ResGB:AddButton("Powder",function()
     local args={workspace.World.Interactables.Stores.ResourceStall,"Powder"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -80,6 +87,7 @@ ResGB:AddButton("Mint",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
+-- Medicine Buttons
 MedGB:AddButton("Saffron",function()
     local args={workspace.World.Interactables.Stores.MedicineStall,"Saffron"}
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
@@ -93,36 +101,25 @@ MedGB:AddButton("Tea",function()
     game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
 end)
 
+-- Tool Buttons
 X:AddButton("Instant Prompt",function()
-    local function I(p) if p:IsA("ProximityPrompt") then p.HoldDuration=0 end end
-    for _,v in pairs(game:GetDescendants()) do I(v) end
-    game.DescendantAdded:Connect(I)
+    for _,v in pairs(game:GetDescendants()) do
+        if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
+    end
+    game.DescendantAdded:Connect(function(v) if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end end)
 end)
-
 X:AddButton("Infinite Yield",function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source',true))()
 end)
-
 X:AddButton("Clear UIs",function()
-    local player=game:GetService("Players").LocalPlayer
-    local playerGui=player.PlayerGui
-    local mainGui=playerGui:FindFirstChild("Main")
+    local player = game.Players.LocalPlayer
+    local mainGui = player.PlayerGui:FindFirstChild("Main")
     if mainGui then
-        local essentials=mainGui:FindFirstChild("Essentials")
-        if essentials then
-            local conditions=essentials:FindFirstChild("Conditions")
-            if conditions then conditions.Visible=false end
-            local laws=essentials:FindFirstChild("Laws")
-            if laws then laws.Visible=false end
+        for _,path in ipairs({"Essentials/Conditions","Essentials/Laws","Roles","Events","Shop/Main","Report"}) do
+            local obj = mainGui:FindFirstChild(path:match("^[^/]+"))
+            for _,sub in ipairs(path:split("/")) do if obj then obj = obj:FindFirstChild(sub) end end
+            if obj then obj.Visible = false end
         end
-        local roles=mainGui:FindFirstChild("Roles")
-        if roles then roles.Visible=false end
-        local events=mainGui:FindFirstChild("Events")
-        if events then events.Visible=false end
-        local shopMain=mainGui:FindFirstChild("Shop") and mainGui.Shop:FindFirstChild("Main")
-        if shopMain then shopMain.Visible=false end
-        local report=mainGui:FindFirstChild("Report")
-        if report then report.Visible=false end
     end
 end)
 
@@ -130,40 +127,60 @@ ExtraGB:AddButton("Animations",function()
     loadstring(game:HttpGet('https://raw.githubusercontent.com/Emerson2-creator/Scripts-Roblox/refs/heads/main/ScriptR6/AnimGuiV2.lua'))()
 end)
 
--- Instant Deliver Gifts Handler
-local RosalinaTab=W:AddTab("Rosalina")
-local RosiGB=RosalinaTab:AddLeftGroupbox("Rosalina UI")
+-- Rosalina Tab
+local RosalinaTab = W:AddTab("Rosalina")
+local RosiGB = RosalinaTab:AddLeftGroupbox("Rosalina UI")
 RosiGB:AddButton("Rosalina UI",function()
-    local player=game:GetService("Players").LocalPlayer
-    local gui=player.PlayerGui:WaitForChild("Main"):WaitForChild("Interactions"):WaitForChild("Rosaline")
-    if gui then gui.Visible=true end
+    local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Main"):WaitForChild("Interactions"):WaitForChild("Rosaline")
+    if gui then gui.Visible = true end
 end)
-
-RosiGB:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false,Tooltip='Toggle highlight on Rosaline'}):OnChanged(function(value)
-    local npc=workspace:WaitForChild("World"):WaitForChild("Interactables"):WaitForChild("SpecialNPCs"):WaitForChild("Rosaline")
-    local existing=npc:FindFirstChild("RosalineHighlight")
-    if value then
+RosiGB:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false}):OnChanged(function(val)
+    local npc = workspace.World.Interactables.SpecialNPCs.Rosaline
+    local existing = npc:FindFirstChild("RosalineHighlight")
+    if val then
         if not existing then
-            local h=Instance.new("Highlight")
-            h.Name="RosalineHighlight";h.Adornee=npc;h.FillColor=Color3.fromRGB(255,0,0)
-            h.OutlineColor=Color3.fromRGB(255,255,255);h.FillTransparency=0.5;h.OutlineTransparency=0
-            h.Parent=npc
+            local h = Instance.new("Highlight",npc)
+            h.Name = "RosalineHighlight" h.Adornee = npc
+            h.FillColor = Color3.fromRGB(255,0,0) h.OutlineColor = Color3.fromRGB(255,255,255)
+            h.FillTransparency = 0.5 h.OutlineTransparency = 0
         end
     else
         if existing then existing:Destroy() end
     end
 end)
-
 RosiGB:AddButton("Instant Deliver Gifts!",function()
-    local args={"ReputationGift"}
-    game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit")
-        :WaitForChild("Services"):WaitForChild("NPCService"):WaitForChild("RE"):WaitForChild("Event")
-        :FireServer(unpack(args))
+    game.ReplicatedStorage.Packages.Knit.Services.NPCService.RE.Event:FireServer("ReputationGift")
 end)
 
--- UI Settings Tab (moved to end)
+-- ESP Tab
+local EspTab = W:AddTab("ESP")
+local E = EspTab:AddLeftGroupbox("Team ESP")
+local Teams = {"Monarch","Viceroy","Heir","Noble","Commander","Knight","Servant","Herbalist","Grand Sage","Sage","Citizen","Peasant"}
+for _,teamName in ipairs(Teams) do
+    E:AddToggle(teamName.."ESP",{Text=teamName.." ESP",Default=false}):OnChanged(function(enabled)
+        for _,plr in ipairs(game.Players:GetPlayers()) do
+            local char = plr.Character
+            if char then
+                local tag = char:FindFirstChild(teamName.."ESP")
+                local isTeam = (plr.Team and plr.Team.Name == teamName)
+                if enabled and isTeam then
+                    if not tag then
+                        local h = Instance.new("Highlight",char)
+                        h.Name = teamName.."ESP"
+                        h.Adornee = char
+                        h.FillColor = plr.TeamColor.Color
+                        h.OutlineColor = plr.TeamColor.Color
+                    end
+                elseif tag then
+                    tag:Destroy()
+                end
+            end
+        end
+    end)
+end
+
+-- UI Settings
 Theme:SetLibrary(Library)
 Theme:ApplyToTab(W:AddTab("UI Settings"))
-
 Save:SetLibrary(Library)
 Save:ApplyToWindow(W)
