@@ -1,186 +1,408 @@
-if _G.LinoriaGui then
-    _G.LinoriaGui:Destroy()
-    _G.LinoriaGui = nil
+-- Optional: reduce detection/crashes
+getgenv().SecureMode = true
+
+-- Load Rayfield UI library with fallback
+local success, Rayfield = pcall(function()
+    local primaryUrl = 'https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'
+    local fallbackUrl = 'https://raw.githubusercontent.com/shlexware/Rayfield/main/source' -- Backup URL
+    local result = loadstring(game:HttpGet(primaryUrl, true))()
+    if not result then
+        return loadstring(game:HttpGet(fallbackUrl, true))()
+    end
+    return result
+end)
+if not success or not Rayfield then
+    error("❌ Failed to load Rayfield UI library")
 end
 
-local repo = "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/"
-local Library = loadstring(game:HttpGet(repo.."Library.lua"))()
-local Theme = loadstring(game:HttpGet(repo.."addons/ThemeManager.lua"))()
-local Save = loadstring(game:HttpGet(repo.."addons/SaveManager.lua"))()
+-- Create main window
+local Window = Rayfield:CreateWindow({
+    Name = "Rise to Destruction – Demon8989_19",
+    LoadingTitle = "Loading UI…",
+    LoadingSubtitle = "Rayfield Edition",
+    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "RiseToDestruction_Config" }
+})
 
-local W = Library:CreateWindow({Title="Rise to Destruction - By Demon8989_19",Center=true,AutoShow=true})
-_G.LinoriaGui = Library.ScreenGui
+-- Helper functions
+local function getStallEvent()
+    local success, event = pcall(function()
+        return game:GetService("ReplicatedStorage")
+            :WaitForChild("Packages", 5)
+            :WaitForChild("Knit", 5)
+            :WaitForChild("Services", 5)
+            :WaitForChild("StallService", 5)
+            :WaitForChild("RE", 5)
+            :WaitForChild("Event", 5)
+    end)
+    if not success or not event then
+        Rayfield:Notify({ Title = "Error", Content = "Failed to find StallService event.", Duration = 3 })
+        return nil
+    end
+    return event
+end
 
--- Main Tab
-local T = W:AddTab("Main")
-local F = T:AddLeftGroupbox("Food")
-local D = T:AddLeftGroupbox("Drinks")
-local S = T:AddLeftGroupbox("Desserts")
+local purchaseDelay = 0.1 -- Default delay
+local function bulkBuy(stallName, items)
+    local event = getStallEvent()
+    if not event then return end
+    local root = workspace:WaitForChild("World", 5)
+                     :WaitForChild("Interactables", 5)
+                     :WaitForChild("Stores", 5)
+                     :WaitForChild(stallName, 5)
+    if not root then
+        Rayfield:Notify({ Title = "Error", Content = "Failed to find " .. stallName .. ".", Duration = 3 })
+        return
+    end
+    for _, item in ipairs(items) do
+        event:FireServer(root, item)
+        task.wait(purchaseDelay)
+    end
+    Rayfield:Notify({ Title = "Purchase Complete", Content = "Bought all selected items from " .. stallName .. ".", Duration = 3 })
+end
+
+-- Pantry Tab
+local PantryTab = Window:CreateTab("Pantry")
+
+-- Purchase Delay Slider
+PantryTab:CreateSection("Purchase Settings")
+PantryTab:CreateSlider({
+    Name = "Purchase Delay (seconds)",
+    Range = {0.05, 0.5},
+    Increment = 0.05,
+    CurrentValue = 0.1,
+    Flag = "PurchaseDelay",
+    Callback = function(value)
+        purchaseDelay = value
+        Rayfield:Notify({ Title = "Delay Updated", Content = "Purchase delay set to " .. value .. " seconds.", Duration = 2 })
+    end
+})
+
+-- Bread Section
+PantryTab:CreateSection("Bread")
+local breadItems = {"Cinnamon Bread", "Cooked Bread", "Bread"}
+local selectedBread = {}
+PantryTab:CreateDropdown({
+    Name = "Select Bread",
+    Options = breadItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "BreadSelection",
+    Callback = function(opts) selectedBread = opts end
+})
+PantryTab:CreateButton({
+    Name = "Buy All Selected Bread",
+    Callback = function()
+        if #selectedBread == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select at least one bread item.", Duration = 2 })
+            return
+        end
+        bulkBuy("BreadStall", selectedBread)
+    end
+})
+
+-- Drinks Section
+PantryTab:CreateSection("Drinks")
+local drinkItems = {"Grape Juice", "Orange Juice", "Apple Juice", "Plum Juice"}
+local selectedDrinks = {}
+PantryTab:CreateDropdown({
+    Name = "Select Drinks",
+    Options = drinkItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "DrinkSelection",
+    Callback = function(opts) selectedDrinks = opts end
+})
+PantryTab:CreateButton({
+    Name = "Buy All Selected Drinks",
+    Callback = function()
+        if #selectedDrinks == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select at least one drink.", Duration = 2 })
+            return
+        end
+        bulkBuy("DrinkStall", selectedDrinks)
+    end
+})
+
+-- Desserts Section
+PantryTab:CreateSection("Desserts")
+local dessertItems = {
+    "Tart", "Pie", "Red Velvet Cake", "Strawberry Cake",
+    "Chocolate Cake", "Apple Pie", "Grape Pie", "Strawberry Jam Pie", "Box of Chocolate"
+}
+local selectedDesserts = {}
+PantryTab:CreateDropdown({
+    Name = "Select Desserts",
+    Options = dessertItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "DessertSelection",
+    Callback = function(opts) selectedDesserts = opts end
+})
+PantryTab:CreateButton({
+    Name = "Buy All Selected Desserts",
+    Callback = function()
+        if #selectedDesserts == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select desserts first.", Duration = 2 })
+            return
+        end
+        bulkBuy("DessertStall", selectedDesserts)
+    end
+})
 
 -- Resources Tab
-local Rtab = W:AddTab("Resources")
-local ResGB = Rtab:AddLeftGroupbox("Resources")
-local MedGB = Rtab:AddLeftGroupbox("Medicine")
+local ResourcesTab = Window:CreateTab("Resources")
+
+-- Raw Resources Section
+ResourcesTab:CreateSection("Raw Resources")
+local resItems = {"Powder", "Mint"}
+local selectedRes = {}
+ResourcesTab:CreateDropdown({
+    Name = "Select Raw Resources",
+    Options = resItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "RawResourceSelection",
+    Callback = function(opts) selectedRes = opts end
+})
+ResourcesTab:CreateButton({
+    Name = "Buy All Selected Resources",
+    Callback = function()
+        if #selectedRes == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select raw resources.", Duration = 2 })
+            return
+        end
+        bulkBuy("ResourceStall", selectedRes)
+    end
+})
+
+-- Medicine Section
+ResourcesTab:CreateSection("Medicine")
+local medItems = {"Saffron", "Honey", "Tea", "Life Elixir", "Veneficium"}
+local selectedMed = {}
+ResourcesTab:CreateDropdown({
+    Name = "Select Medicine",
+    Options = medItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "MedicineSelection",
+    Callback = function(opts) selectedMed = opts end
+})
+ResourcesTab:CreateButton({
+    Name = "Buy All Selected Medicine",
+    Callback = function()
+        if #selectedMed == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select medicines.", Duration = 2 })
+            return
+        end
+        bulkBuy("MedicineStall", selectedMed)
+    end
+})
 
 -- Tools Tab
-local ToolTab = W:AddTab("Tools")
-local X = ToolTab:AddLeftGroupbox("Tools")
-local ExtraGB = ToolTab:AddLeftGroupbox("Extra")
+local ToolsTab = Window:CreateTab("Tools")
 
--- Food Buttons
-F:AddButton("Cinnamon Bread",function()
-    local args={workspace.World.Interactables.Stores.BreadStall,"Cinnamon Bread"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-F:AddButton("Cooked Bread",function()
-    local args={workspace.World.Interactables.Stores.BreadStall,"Cooked Bread"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-F:AddButton("Bread",function()
-    local args={workspace.World.Interactables.Stores.BreadStall,"Bread"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-
--- Drink Buttons
-D:AddButton("Grape Juice",function()
-    local args={workspace.World.Interactables.Stores.DrinkStall,"Grape Juice"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-D:AddButton("Orange Juice",function()
-    local args={workspace.World.Interactables.Stores.DrinkStall,"Orange Juice"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-D:AddButton("Apple Juice",function()
-    local args={workspace.World.Interactables.Stores.DrinkStall,"Apple Juice"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-
--- Dessert Buttons
-S:AddButton("Tart",function()
-    local args={workspace.World.Interactables.Stores.DessertStall,"Tart"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-S:AddButton("Pie",function()
-    local args={workspace.World.Interactables.Stores.DessertStall,"Pie"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-S:AddButton("Red Velvet Cake",function()
-    local args={workspace.World.Interactables.Stores.DessertStall,"Red Velvet Cake"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-S:AddButton("Strawberry Cake",function()
-    local args={workspace.World.Interactables.Stores.DessertStall,"Strawberry Cake"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-S:AddButton("Chocolate Cake",function()
-    local args={workspace.World.Interactables.Stores.DessertStall,"Chocolate Cake"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-
--- Resources Buttons
-ResGB:AddButton("Powder",function()
-    local args={workspace.World.Interactables.Stores.ResourceStall,"Powder"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-ResGB:AddButton("Mint",function()
-    local args={workspace.World.Interactables.Stores.ResourceStall,"Mint"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-
--- Medicine Buttons
-MedGB:AddButton("Saffron",function()
-    local args={workspace.World.Interactables.Stores.MedicineStall,"Saffron"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-MedGB:AddButton("Honey",function()
-    local args={workspace.World.Interactables.Stores.MedicineStall,"Honey"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-MedGB:AddButton("Tea",function()
-    local args={workspace.World.Interactables.Stores.MedicineStall,"Tea"}
-    game.ReplicatedStorage.Packages.Knit.Services.StallService.RE.Event:FireServer(unpack(args))
-end)
-
--- Tool Buttons
-X:AddButton("Instant Prompt",function()
-    for _,v in pairs(game:GetDescendants()) do
-        if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
-    end
-    game.DescendantAdded:Connect(function(v) if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end end)
-end)
-X:AddButton("Infinite Yield",function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source',true))()
-end)
-X:AddButton("Clear UIs",function()
-    local player = game.Players.LocalPlayer
-    local mainGui = player.PlayerGui:FindFirstChild("Main")
-    if mainGui then
-        for _,path in ipairs({"Essentials/Conditions","Essentials/Laws","Roles","Events","Shop/Main","Report"}) do
-            local obj = mainGui:FindFirstChild(path:match("^[^/]+"))
-            for _,sub in ipairs(path:split("/")) do if obj then obj = obj:FindFirstChild(sub) end end
-            if obj then obj.Visible = false end
-        end
-    end
-end)
-
-ExtraGB:AddButton("Animations",function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Emerson2-creator/Scripts-Roblox/refs/heads/main/ScriptR6/AnimGuiV2.lua'))()
-end)
-
--- Rosalina Tab
-local RosalinaTab = W:AddTab("Rosalina")
-local RosiGB = RosalinaTab:AddLeftGroupbox("Rosalina UI")
-RosiGB:AddButton("Rosalina UI",function()
-    local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Main"):WaitForChild("Interactions"):WaitForChild("Rosaline")
-    if gui then gui.Visible = true end
-end)
-RosiGB:AddToggle('FindRosaline',{Text='Find Rosaline',Default=false}):OnChanged(function(val)
-    local npc = workspace.World.Interactables.SpecialNPCs.Rosaline
-    local existing = npc:FindFirstChild("RosalineHighlight")
-    if val then
-        if not existing then
-            local h = Instance.new("Highlight",npc)
-            h.Name = "RosalineHighlight" h.Adornee = npc
-            h.FillColor = Color3.fromRGB(255,0,0) h.OutlineColor = Color3.fromRGB(255,255,255)
-            h.FillTransparency = 0.5 h.OutlineTransparency = 0
-        end
-    else
-        if existing then existing:Destroy() end
-    end
-end)
-RosiGB:AddButton("Instant Deliver Gifts!",function()
-    game.ReplicatedStorage.Packages.Knit.Services.NPCService.RE.Event:FireServer("ReputationGift")
-end)
-
--- ESP Tab
-local EspTab = W:AddTab("ESP")
-local E = EspTab:AddLeftGroupbox("Team ESP")
-local Teams = {"Monarch","Viceroy","Heir","Noble","Commander","Knight","Servant","Herbalist","Grand Sage","Sage","Citizen","Peasant"}
-for _,teamName in ipairs(Teams) do
-    E:AddToggle(teamName.."ESP",{Text=teamName.." ESP",Default=false}):OnChanged(function(enabled)
-        for _,plr in ipairs(game.Players:GetPlayers()) do
-            local char = plr.Character
-            if char then
-                local tag = char:FindFirstChild(teamName.."ESP")
-                local isTeam = (plr.Team and plr.Team.Name == teamName)
-                if enabled and isTeam then
-                    if not tag then
-                        local h = Instance.new("Highlight",char)
-                        h.Name = teamName.."ESP"
-                        h.Adornee = char
-                        h.FillColor = plr.TeamColor.Color
-                        h.OutlineColor = plr.TeamColor.Color
-                    end
-                elseif tag then
-                    tag:Destroy()
-                end
+ToolsTab:CreateSection("Core Tools")
+ToolsTab:CreateButton({
+    Name = "Instant Prompt",
+    Callback = function()
+        local count = 0
+        for _, v in ipairs(game:GetDescendants()) do
+            if v:IsA("ProximityPrompt") then
+                v.HoldDuration = 0
+                count = count + 1
             end
         end
-    end)
+        game.DescendantAdded:Connect(function(v)
+            if v:IsA("ProximityPrompt") then v.HoldDuration = 0 end
+        end)
+        Rayfield:Notify({ Title = "Success", Content = "Set " .. count .. " prompts to instant.", Duration = 3 })
+    end
+})
+
+ToolsTab:CreateButton({
+    Name = "Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source', true))()
+        Rayfield:Notify({ Title = "Success", Content = "Infinite Yield loaded.", Duration = 3 })
+    end
+})
+
+ToolsTab:CreateButton({
+    Name = "Clear UIs",
+    Callback = function()
+        local pg = game.Players.LocalPlayer.PlayerGui:FindFirstChild("Main")
+        if not pg then
+            Rayfield:Notify({ Title = "Error", Content = "Main GUI not found.", Duration = 3 })
+            return
+        end
+        local count = 0
+        for _, path in ipairs({"Essentials/Conditions", "Essentials/Laws", "Roles", "Events", "Shop/Main", "Report"}) do
+            local obj = pg:FindFirstChild(path:match("^[^/]+"))
+            for _, sub in ipairs(path:split("/")) do
+                if obj then obj = obj:FindFirstChild(sub) end
+            end
+            if obj then
+                obj.Visible = false
+                count = count + 1
+            end
+        end
+        Rayfield:Notify({ Title = "Success", Content = "Hid " .. count .. " UI elements.", Duration = 3 })
+    end
+})
+
+ToolsTab:CreateSection("Extra Tools")
+ToolsTab:CreateButton({
+    Name = "Animations",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/Emerson2-creator/Scripts-Roblox/main/ScriptR6/AnimGuiV2.lua', true))()
+        Rayfield:Notify({ Title = "Success", Content = "Animations GUI loaded.", Duration = 3 })
+    end
+})
+
+-- Rosalina / Horses Tab
+local RosalinaTab = Window:CreateTab("Rosalina / Horses")
+
+RosalinaTab:CreateSection("Rosalina UI")
+RosalinaTab:CreateButton({
+    Name = "Show Rosaline",
+    Callback = function()
+        local gui = game.Players.LocalPlayer.PlayerGui:WaitForChild("Main", 5):WaitForChild("Interactions", 5):WaitForChild("Rosaline", 5)
+        if gui then
+            gui.Visible = true
+            Rayfield:Notify({ Title = "Success", Content = "Rosaline UI shown.", Duration = 3 })
+        else
+            Rayfield:Notify({ Title = "Error", Content = "Rosaline UI not found.", Duration = 3 })
+        end
+    end
+})
+
+RosalinaTab:CreateToggle({
+    Name = "Highlight Rosaline",
+    CurrentValue = false,
+    Flag = "HighlightRosaline",
+    Callback = function(val)
+        local npc = workspace:WaitForChild("World", 5):WaitForChild("Interactables", 5):WaitForChild("SpecialNPCs", 5):FindFirstChild("Rosaline")
+        if not npc then
+            Rayfield:Notify({ Title = "Error", Content = "Rosaline NPC not found.", Duration = 3 })
+            return
+        end
+        local existing = npc:FindFirstChild("RosalineHighlight")
+        if val then
+            if not existing then
+                local h = Instance.new("Highlight", npc)
+                h.Name = "RosalineHighlight"
+                h.Adornee = npc
+                h.FillColor = Color3.fromRGB(255, 0, 0)
+                h.OutlineColor = Color3.fromRGB(255, 255, 255)
+                h.FillTransparency = 0.5
+                h.OutlineTransparency = 0
+                Rayfield:Notify({ Title = "Success", Content = "Rosaline highlighted.", Duration = 3 })
+            end
+        else
+            if existing then
+                existing:Destroy()
+                Rayfield:Notify({ Title = "Success", Content = "Rosaline highlight removed.", Duration = 3 })
+            end
+        end
+    end
+})
+
+RosalinaTab:CreateButton({
+    Name = "Instant Deliver Gifts!",
+    Callback = function()
+        local event = game:GetService("ReplicatedStorage"):WaitForChild("Packages", 5):WaitForChild("Knit", 5):WaitForChild("Services", 5):WaitForChild("NPCService", 5):WaitForChild("RE", 5):WaitForChild("Event", 5)
+        if event then
+            event:FireServer("ReputationGift")
+            Rayfield:Notify({ Title = "Success", Content = "Reputation gift delivered.", Duration = 3 })
+        else
+            Rayfield:Notify({ Title = "Error", Content = "NPCService event not found.", Duration = 3 })
+        end
+    end
+})
+
+-- Horses Section (Added from old script)
+RosalinaTab:CreateSection("Horses")
+local horseItems = {"Fast Horse", "Standard Horse", "Better Horse"}
+local selectedHorses = {}
+RosalinaTab:CreateDropdown({
+    Name = "Select Horses",
+    Options = horseItems,
+    CurrentOption = {},
+    MultipleOptions = true,
+    Flag = "HorseSelection",
+    Callback = function(opts) selectedHorses = opts end
+})
+RosalinaTab:CreateButton({
+    Name = "Buy All Selected Horses",
+    Callback = function()
+        if #selectedHorses == 0 then
+            Rayfield:Notify({ Title = "No Selection", Content = "Select at least one horse.", Duration = 2 })
+            return
+        end
+        bulkBuy("HorseStall", selectedHorses)
+    end
+})
+
+-- ESP Tab: Team Highlights
+local EspTab = Window:CreateTab("ESP")
+EspTab:CreateSection("Team ESP")
+
+local function updateESP(teamName, enabled)
+    local function applyHighlight(plr)
+        local char = plr.Character
+        if not char then return end
+        local tag = char:FindFirstChild(teamName .. "ESP")
+        local isTeam = plr.Team and plr.Team.Name == teamName
+        if enabled and isTeam and not tag then
+            local h = Instance.new("Highlight", char)
+            h.Name = teamName .. "ESP"
+            h.Adornee = char
+            h.FillColor = plr.TeamColor.Color
+            h.OutlineColor = plr.TeamColor.Color
+        elseif (not enabled or not isTeam) and tag then
+            tag:Destroy()
+        end
+    end
+
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        applyHighlight(plr)
+    end
+    if enabled then
+        game.Players.PlayerAdded:Connect(function(plr)
+            plr.CharacterAdded:Connect(function() applyHighlight(plr) end)
+        end)
+    end
 end
 
--- UI Settings
-Theme:SetLibrary(Library)
-Theme:ApplyToTab(W:AddTab("UI Settings"))
-Save:SetLibrary(Library)
-Save:ApplyToWindow(W)
+for _, teamName in ipairs({
+    "Monarch", "Viceroy", "Heir", "Noble", "Commander", "Knight", "Servant", "Herbalist",
+    "Grand Sage", "Sage", "Citizen", "Peasant"
+}) do
+    EspTab:CreateToggle({
+        Name = teamName .. " ESP",
+        CurrentValue = false,
+        Flag = teamName .. "ESP",
+        Callback = function(enabled)
+            updateESP(teamName, enabled)
+            Rayfield:Notify({ Title = "Success", Content = teamName .. " ESP " .. (enabled and "enabled" or "disabled") .. ".", Duration = 3 })
+        end
+    })
+end
+
+-- UI Settings Tab
+local UISettingsTab = Window:CreateTab("UI Settings")
+UISettingsTab:CreateSection("Customize UI Color")
+UISettingsTab:CreateColorPicker({
+    Name = "UI Theme Color",
+    Default = Color3.fromRGB(0, 85, 255),
+    Flag = "UIThemeColor",
+    Callback = function(color)
+        pcall(function()
+            Rayfield:ChangeThemeColor(color)
+            Rayfield:Notify({ Title = "Success", Content = "UI theme color updated.", Duration = 3 })
+        end)
+    end
+})
+
+-- Load saved configuration
+Rayfield:LoadConfiguration()
