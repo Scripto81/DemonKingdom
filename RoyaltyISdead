@@ -15,12 +15,12 @@ if not success or not Rayfield then
     error("❌ Failed to load Rayfield UI library")
 end
 
--- Create main window
+-- Create main window with a new configuration file to avoid loading old data
 local Window = Rayfield:CreateWindow({
     Name = "Rise to Destruction – Demon8989_19",
     LoadingTitle = "Loading UI…",
     LoadingSubtitle = "Rayfield Edition",
-    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "RiseToDestruction_Config" }
+    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "RiseToDestruction_Config_v2" } -- Fresh config file
 })
 
 -- Helper functions
@@ -63,14 +63,13 @@ end
 -- Pantry Tab
 local PantryTab = Window:CreateTab("Pantry")
 
--- Purchase Delay Slider
+-- Purchase Delay Slider (without Flag to avoid SetValue issues)
 PantryTab:CreateSection("Purchase Settings")
 PantryTab:CreateSlider({
     Name = "Purchase Delay (seconds)",
     Range = {0.05, 0.5},
     Increment = 0.05,
     CurrentValue = 0.1,
-    Flag = "PurchaseDelay",
     Callback = function(value)
         purchaseDelay = value
         Rayfield:Notify({ Title = "Delay Updated", Content = "Purchase delay set to " .. value .. " seconds.", Duration = 2 })
@@ -320,7 +319,7 @@ RosalinaTab:CreateButton({
     end
 })
 
--- Horses Section (Added from old script)
+-- Horses Section
 RosalinaTab:CreateSection("Horses")
 local horseItems = {"Fast Horse", "Standard Horse", "Better Horse"}
 local selectedHorses = {}
@@ -389,20 +388,54 @@ for _, teamName in ipairs({
     })
 end
 
--- UI Settings Tab
-local UISettingsTab = Window:CreateTab("UI Settings")
-UISettingsTab:CreateSection("Customize UI Color")
-UISettingsTab:CreateColorPicker({
-    Name = "UI Theme Color",
-    Default = Color3.fromRGB(0, 85, 255),
-    Flag = "UIThemeColor",
-    Callback = function(color)
-        pcall(function()
-            Rayfield:ChangeThemeColor(color)
-            Rayfield:Notify({ Title = "Success", Content = "UI theme color updated.", Duration = 3 })
-        end)
-    end
-})
+-- Silver Monitor Tab
+local SilverMonitorTab = Window:CreateTab("Silver Monitor")
 
--- Load saved configuration
-Rayfield:LoadConfiguration()
+-- Get initial silver value
+local player = game:GetService("Players").LocalPlayer
+local leaderstats = player:WaitForChild("leaderstats")
+local silver = leaderstats:WaitForChild("Silver")
+local initialSilver = silver.Value
+
+-- Create a label to display the silver status
+local silverLabel
+SilverMonitorTab:CreateSection("Silver Status")
+silverLabel = SilverMonitorTab:CreateLabel("Monitoring silver...")
+
+-- Function to format numbers with commas
+local function formatNumber(num)
+    local formatted = tostring(num)
+    local k
+    while true do
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then break end
+    end
+    return formatted
+end
+
+-- Function to update the silver label
+local function updateSilverLabel()
+    local currentSilver = silver.Value
+    local difference = currentSilver - initialSilver
+    if difference > 0 then
+        silverLabel:Set("Above initial by " .. formatNumber(difference) .. " silver")
+    elseif difference < 0 then
+        silverLabel:Set("Below initial by " .. formatNumber(math.abs(difference)) .. " silver")
+    else
+        silverLabel:Set("At initial silver amount")
+    end
+end
+
+-- Connect to Changed event for real-time updates
+silver.Changed:Connect(updateSilverLabel)
+
+-- Initial update
+updateSilverLabel()
+
+-- Load configuration safely
+local success, err = pcall(function()
+    Rayfield:LoadConfiguration()
+end)
+if not success then
+    Rayfield:Notify({ Title = "Error", Content = "Failed to load configuration: " .. tostring(err), Duration = 5 })
+end
